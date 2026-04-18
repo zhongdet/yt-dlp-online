@@ -1,0 +1,15 @@
+# Python / uv
+__pycache__/
+.venv/
+.python-version
+backend/downloads/  # 重要：不要把下載的影片上傳
+
+# Node / React
+node_modules/
+downloads/
+
+frontend/dist/
+.env
+
+# Docker
+.dockerignore
