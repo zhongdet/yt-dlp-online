@@ -42,7 +42,7 @@ function App() {
   const handleDownloadClick = (uuid: string) => {
     const item = items.find((i) => i.uuid === uuid);
     if (item) {
-      handleDownload(uuid, item.url, item.selectedFormatId);
+      handleDownload(uuid, item.url, item.selectedFormatId, item.info?.title);
     }
   };
 

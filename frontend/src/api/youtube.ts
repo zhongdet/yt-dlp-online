@@ -21,8 +21,14 @@ export const api = {
     return fetch(`${API_BASE_URL}/progress/${uuid}`);
   },
 
-  getFileUrl(uuid: string): string {
-    return `${API_BASE_URL}/file/${uuid}`;
+  getFileUrl(uuid: string, filename?: string): string {
+    const baseUrl = `${API_BASE_URL}/file/${uuid}`;
+      if (filename) {
+      // use encodeURIComponent process special character
+      return `${baseUrl}?filename=${encodeURIComponent(filename)}`;
+    }
+    
+    return baseUrl;
   },
 
   async sendCleanup(taskIds: string[]): Promise<Response> {

@@ -8,7 +8,7 @@ interface UseDownload {
     uuid: string,
     status: VideoItem["downloadStatus"],
     progress?: string,
-    errorMessage?: string
+    errorMessage?: string,
   ) => void;
   addTaskId: (uuid: string) => void;
 }
@@ -17,7 +17,7 @@ export function useDownload({ setItemDownloadStatus, addTaskId }: UseDownload) {
   const pollIntervalsRef = useRef<Map<string, number>>(new Map());
 
   const handleDownload = useCallback(
-    async (uuid: string, url: string, selectedFormatId?: string) => {
+    async (uuid: string, url: string, selectedFormatId?: string, filename?: string) => {
       setItemDownloadStatus(uuid, "downloading", "0%");
 
       try {
@@ -32,13 +32,13 @@ export function useDownload({ setItemDownloadStatus, addTaskId }: UseDownload) {
             const pRes = await api.getProgress(uuid);
             if (pRes.ok) {
               const pData = await pRes.json();
-              console.log(pData)
+              console.log(pData);
 
               if (pData.status === "finished") {
                 clearInterval(pollProgress);
                 pollIntervalsRef.current.delete(uuid);
                 setItemDownloadStatus(uuid, "finished", "100%");
-                window.location.href = api.getFileUrl(uuid);
+                window.open(api.getFileUrl(uuid, filename), "_blank");
               } else if (pData.status === "error") {
                 clearInterval(pollProgress);
                 pollIntervalsRef.current.delete(uuid);
@@ -56,12 +56,13 @@ export function useDownload({ setItemDownloadStatus, addTaskId }: UseDownload) {
 
         pollIntervalsRef.current.set(uuid, pollProgress);
       } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : "Download failed";
+        const errorMsg =
+          error instanceof Error ? error.message : "Download failed";
         setItemDownloadStatus(uuid, "error", undefined, errorMsg);
         toast.error(errorMsg);
       }
     },
-    [setItemDownloadStatus, addTaskId]
+    [setItemDownloadStatus, addTaskId],
   );
 
   const cleanup = useCallback(() => {

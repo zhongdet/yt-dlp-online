@@ -41,12 +41,11 @@ ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 @app.post("/api/info")
 async def get_info(data: VideoRequest):
-    ydl_opts = {"quiet": True}
     loop = asyncio.get_event_loop()
 
     try:
         # 使用 str(data.url) 將 Pydantic HttpUrl 物件轉回字串
-        with yt_dlp.YoutubeDL({"quite": True}) as ydl:
+        with yt_dlp.YoutubeDL({"quiet": True, "remote_components": ["ejs:github"]}) as ydl:
             info = await loop.run_in_executor(
                 None, lambda: ydl.extract_info(str(data.url), download=False)
             )
@@ -120,16 +119,15 @@ async def get_progress(task_id: str):
     return progress
 
 @app.get("/api/file/{task_id}")
-async def get_file(task_id: str = Path(..., pattern="^[a-zA-Z0-9_-]+$")):
-    # 尋找與 task_id 匹配的檔案 (無視副檔名)
+async def get_file(
+    task_id: str = Path(..., pattern="^[a-zA-Z0-9_-]+$"),
+    filename: str | None = None  # add a optional parameter
+):
     search_pattern = os.path.join(DOWNLOAD_DIR, f"{task_id}.*")
     matches = glob.glob(search_pattern)
     if not matches:
-        raise HTTPException(status_code=404, detail="File not found or still processing")
+        raise HTTPException(status_code=404, detail="File not found")
     
-    # 返回找到的第一個檔案 
-    # 注意: 如果同時存在 image 和 video，我們會希望返回 video。yt-dlp 下載後有時會留下 .jpg (如果 embed_thumbnail 失敗)
-    # 我們將優先選擇 .mp4, .webm, .mkv, .mp3, .m4a 等媒體格式
     media_exts = [".mp4", ".mkv", ".webm", ".mp3", ".m4a", ".ogg", ".wav"]
     target_file = matches[0]
     for m in matches:
@@ -137,11 +135,21 @@ async def get_file(task_id: str = Path(..., pattern="^[a-zA-Z0-9_-]+$")):
             target_file = m
             break
 
+    # get oringin file name
+    file_ext = os.path.splitext(target_file)[1]
+    
+    # 如果前端有傳檔名，就用前端的；沒有就用原始檔名
+    # 加上副檔名，否則下載下來會沒格式
+    display_name = filename if filename else os.path.basename(target_file)
+    if filename and not filename.endswith(file_ext):
+        display_name = f"{filename}{file_ext}"
+
     return FileResponse(
         path=target_file,
         media_type="application/octet-stream",
-        filename=os.path.basename(target_file)
+        filename=display_name  # set correct header
     )
+
 
 class CleanupRequest(BaseModel):
     task_ids: List[str]
