@@ -5,7 +5,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import { Download, Trash2, Loader2, AlertCircle, Check } from "lucide-react";
 import { HoverIconButton } from "@/components/hoverIconBtn";
