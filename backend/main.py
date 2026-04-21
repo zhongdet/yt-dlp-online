@@ -6,6 +6,7 @@ import yt_dlp
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Path
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, HttpUrl
 from typing import List
 import glob
@@ -172,3 +173,16 @@ async def cleanup_files(data: CleanupRequest):
         progress_db.pop(task_id, None)
 
     return {"message": f"Cleaned up {deleted_count} files"}
+# /dist static file
+dist_path = os.path.join(os.getcwd(), "dist")
+if os.path.exists(dist_path):
+    app.mount("/", StaticFiles(directory=dist_path, html=True), name="frontend")
+    
+    @app.exception_handler(404)
+    async def custom_404_handler(request, __):
+        return FileResponse(os.path.join(dist_path, "index.html"))
+else:
+    # tips for developing
+    @app.get("/")
+    async def root():
+        return {"message": "Backend is running. Frontend dist not found, please use vite dev server."}

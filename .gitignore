@@ -11,5 +11,4 @@ downloads/
 frontend/dist/
 .env
 
-# Docker
-.dockerignore
+

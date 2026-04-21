@@ -25,7 +25,7 @@ export function useVideoList() {
   }, []);
 
   const addItem = useCallback((url: string): string => {
-    const uuid = crypto.randomUUID();
+    const uuid = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     const newItem: VideoItem = {
       uuid,
       url,
